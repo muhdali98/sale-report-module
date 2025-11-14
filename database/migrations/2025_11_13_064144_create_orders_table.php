@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
+            $table->string('order_no')->unique();
             $table->integer('customer_id');
             $table->date('order_date');
             $table->decimal('total_amount', 12, 2);

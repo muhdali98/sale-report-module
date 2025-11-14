@@ -20,26 +20,26 @@ class ReportController extends Controller
         $start = $request->start_date ?? now()->subDays(30)->format('Y-m-d');
         $end = $request->end_date ?? now()->format('Y-m-d');
 
-        $totalOrders = OrderItem::whereHas('order', fn($q) => $q->whereBetween('order_date', [$start, $end]))->count();
-        $totalRevenue = OrderItem::whereHas('order', fn($q) => $q->whereBetween('order_date', [$start, $end]))
-            ->sum(DB::raw('quantity * unit_price'));
-
-        $topProducts = OrderItem::select('product_id', DB::raw('SUM(quantity) as total_qty'))
-            ->whereHas('order', fn($q) => $q->whereBetween('order_date', [$start, $end]))
-            ->groupBy('product_id')
+        $totalOrders = Order::whereBetween('order_date', [$start, $end])->count();
+        $totalRevenue = Order::whereBetween('order_date', [$start, $end])
+            ->sum('total_amount');
+        $topProducts = OrderItem::select('products.name as product_name', DB::raw('SUM(order_items.quantity) as total_qty'))
+            ->join('products', 'products.id', '=', 'order_items.product_id')
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->whereBetween('orders.order_date', [$start, $end])
+            ->groupBy('products.name')
             ->orderByDesc('total_qty')
-            ->with('product')
-            ->take(3)
+            ->limit(3)
             ->get();
 
-        $avgOrderValue = OrderItem::whereHas('order', fn($q) => $q->whereBetween('order_date', [$start, $end]))
-            ->select(DB::raw('AVG(quantity * unit_price) as avg_value'))
-            ->value('avg_value');
+        $avgOrderValue = Order::whereBetween('order_date', [$start, $end])
+            ->avg('total_amount');
 
-        $orders = OrderItem::with(['order.customer', 'product.category'])
-            ->whereHas('order', fn($q) => $q->whereBetween('order_date', [$start, $end]))
-            ->orderByDesc('order_id')
-            ->paginate(10);
+        $orders = Order::with(['orderItems','customer', 'orderItems.product.category'])
+            ->whereBetween('order_date', [$start, $end])
+            ->orderByDesc('order_date')
+            ->paginate(10)
+            ->withQueryString();
 
         return view('report.index', compact(
             'totalOrders',

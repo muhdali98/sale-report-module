@@ -19,6 +19,7 @@ class OrderFactory extends Factory
     {
         return [
             'customer_id' => Customer::inRandomOrder()->first()->id ?? Customer::factory(),
+            'order_no' => 'ORD-' . str_pad($this->faker->unique()->numberBetween(1, 99999), 5, '0', STR_PAD_LEFT),
             'order_date' => fake()->dateTimeBetween('-3 months', 'now'),
             'total_amount' => 0,
         ];

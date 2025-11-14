@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="mx-auto sm:px-6 lg:px-8">
 
             {{-- Container --}}
             <div class="bg-white shadow-sm sm:rounded-lg p-6 space-y-6">
@@ -52,7 +52,7 @@
                         <h5 class="text-gray-500 font-medium mb-2">Top 3 Products</h5>
                         <ul class="list-disc list-inside text-sm">
                             @foreach($topProducts as $product)
-                                <li>{{ $product->product->name ?? '-' }} ({{ $product->total_qty }})</li>
+                                <li>{{ $product->product_name ?? '-' }} ({{ $product->total_qty }})</li>
                             @endforeach
                         </ul>
                     </div>
@@ -63,6 +63,9 @@
                     <table class="min-w-full divide-y divide-gray-200 bg-white">
                         <thead class="bg-gray-50">
                             <tr>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Order No</th>
                                 <th
                                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Order Date</th>
@@ -90,36 +93,63 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
-                            @foreach($orders as $item)
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                        {{ $item->order->created_at->format('Y-m-d') }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                        {{ $item->order->customer->name }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                        {{ $item->order->customer->state ?? '-' }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                        {{ $item->product->category->name ?? '-' }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $item->product->name }}
-                                    </td>
-                                    <td class="px-6 py-4 text-center whitespace-nowrap text-sm text-gray-700">
-                                        {{ $item->quantity }}
-                                    </td>
-                                    <td class="px-6 py-4 text-right whitespace-nowrap text-sm text-gray-700">
-                                        RM{{ number_format($item->unit_price, 2) }}</td>
-                                    <td class="px-6 py-4 text-right whitespace-nowrap text-sm text-gray-700">
-                                        RM{{ number_format($item->quantity * $item->unit_price, 2) }}</td>
-                                </tr>
+                            @foreach ($orders as $order)
+                                    @php
+                                        $rowspan = $order->orderItems->count();
+                                    @endphp
+
+                                @foreach ($order->orderItems as $item)
+                                    <tr             class="hover:bg-gray-50 transition">
+
+                                        {{--         Only show order info in FIRST item row --}}
+                                        @if ($loop->first)
+                                            <td rowspan="{{ $rowspan }}" class="px-6 py-4 align-top whitespace-nowrap text-sm font-medium text-gray-800">
+                                                                {{ $order->order_no }}
+                                            </td>
+
+                                                    <td rowspan="{{ $rowspan }}" class="px-6 py-4 align-top whitespace-nowrap text-sm text-gray-700">
+                                                                {{ $order->order_date->format('Y-m-d') }}
+                                            </td>
+
+                                            <td rowspan="{{ $rowspan }}" class="px-6 py-4 align-top whitespace-nowrap text-sm text-gray-700">
+                                                                {{ $order->customer->name }}
+                                            </td>
+
+                                            <td rowspan="{{ $rowspan }}" class="px-6 py-4 align-top whitespace-nowrap text-sm text-gray-700">
+                                                    {{ $order->customer->state ?? '-' }}
+                                                            </td>
+                                        @endif
+
+                                                    {{-- Item-level columns --}}
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                                                    {{ $item->product->category->name }}
+                                                    </td>
+
+                                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                                                    {{ $item->product->name }}
+                                                    </td>
+
+                                                    <td class="px-6 py-4 text-center whitespace-nowrap text-sm text-gray-700">
+                                                                    {{ $item->quantity }}
+                                                    </td>
+
+                                                       <td class="px-6 py-4 text-right whitespace-nowrap text-sm text-gray-700">
+                                                                    RM{{ number_format($item->unit_price, 2) }}
+                                                    </td>
+
+                                                             <td class="px-6 py-4 text-right whitespace-nowrap text-sm text-gray-800 font-medium">
+                                                        RM{{ number_format($item->quantity * $item->unit_price, 2) }}
+                                                        </td>
+                                                        </tr>
+                                @endforeach
                             @endforeach
+
                         </tbody>
-                    </table>
+
+                        </table>
 
                     <div class="mt-4 px-4 py-2 bg-white text-gray-700 rounded">
-                        {{ $orders->links() }}
+                        {{ $orders->withQueryString()->links() }}
                     </div>
                 </div>
 
